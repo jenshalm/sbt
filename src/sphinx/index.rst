@@ -20,8 +20,8 @@ the :doc:`index of names and types <Name-Index>`.
    Community/index
    Detailed-Topics/index
    Examples/index
+   Launcher/index
    Name-Index
-
 
 .. The following includes documents that are not important enough to be in a visible toctree
    They are linked from other documents, which is enough.

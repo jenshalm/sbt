@@ -11,7 +11,7 @@ object Boot
 	def main(args: Array[String])
 	{
 		args match {
-			case Array("--version") =>
+			case Array("--version" | "-version") =>
 				println("sbt launcher version " + Package.getPackage("xsbt.boot").getImplementationVersion)
 			case _ =>
 				System.clearProperty("scala.home") // avoid errors from mixing Scala versions in the same JVM
