@@ -6,6 +6,7 @@ import scala.util.control.NonFatal
 import java.net.URI
 import java.io.IOException
 import Pre._
+import com.sun.org.apache.xalan.internal.xslt.Process
 
 /** A wrapper around 'raw' static methods to meet the sbt application interface. */
 class ServerApplication private (provider: xsbti.AppProvider) extends xsbti.AppMain {
@@ -23,6 +24,7 @@ object ServerApplication {
   val SERVER_SYNCH_TEXT = "[SERVER-URI]"
   val ServerMainClass = classOf[xsbti.ServerMain]
   // TODO - We should also adapt friendly static methods into servers, perhaps...
+  // We could even structurally type things that have a uri + awaitTermination method...
   def isServerApplication(clazz: Class[_]): Boolean =
     ServerMainClass.isAssignableFrom(clazz)
   def apply(provider: xsbti.AppProvider): xsbti.AppMain = 
@@ -78,7 +80,6 @@ object ServerLocator {
     val props = new java.util.Properties
     props.setProperty(SERVER_URI_PROPERTY, uri.toASCIIString)
     val output = new java.io.FileOutputStream(f)
-    // TODO - Better date format.
     val df = new java.text.SimpleDateFormat("yyyy-MM-dd'T'HH:mmZ")
     df.setTimeZone(java.util.TimeZone.getTimeZone("UTC"))
     try props.store(output, s"Server Startup at ${df.format(new java.util.Date)}")
@@ -96,11 +97,27 @@ object ServerLocator {
       case e: IOException => false
     }
 }
+/** A helper class that dumps incoming values into a print stream. */
+class StreamDumper(in: java.io.BufferedReader, out: java.io.PrintStream) extends Thread {
+  // Don't block the application for this thread.
+  setDaemon(true)
+  override def run(): Unit = {
+    def read(): Unit = in.readLine match {
+      case null => ()
+      case line => 
+        out.println(line)
+        read()
+    }
+    read() 
+  }
+}
 object ServerLauncher {
   import ServerApplication.SERVER_SYNCH_TEXT
   def startServer(currentDirectory: File, config: LaunchConfiguration): URI = {
-    // TODO - better error message on failure.  We shouldn't make it here if this is not true...
-    val serverConfig = config.serverConfig.get
+    val serverConfig = config.serverConfig match {
+      case Some(c) => c
+      case None => throw new RuntimeException("Logic Failure:  Attempting to start a server that isn't configured to be a server.  Please report a bug.")
+    }
     val launchConfig = java.io.File.createTempFile("sbtlaunch", "config")
     LaunchConfiguration.save(config, launchConfig)
     val pb = new java.lang.ProcessBuilder()
@@ -108,7 +125,6 @@ object ServerLauncher {
       case Some(args) => args
       case None => Nil
     }
-    // TODO - Figure out how we make use of -D properties. Probably loading in the server itself...
     // TODO - Handle windows path stupidity
     val cmd: List[String] = 
       ("java" :: jvmArgs) ++
@@ -116,6 +132,11 @@ object ServerLauncher {
     pb.command(cmd:_*)
     pb.directory(currentDirectory)
     val process = pb.start()
+    // First make sure errors are passed through.
+    val error = process.getErrorStream
+    val errorDumper = new StreamDumper(new java.io.BufferedReader(new java.io.InputStreamReader(error)), System.err)
+    errorDumper.start()
+    // Now we look for the URI synch value.
     val input = process.getInputStream
     readUntilSynch(new java.io.BufferedReader(new java.io.InputStreamReader(input))) match {
       case Some(uri) => uri

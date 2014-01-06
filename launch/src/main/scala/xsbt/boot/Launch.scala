@@ -38,6 +38,7 @@ object Launch
 	/** Check to see if this is a "lookup the server" request. */
 	def handleLocateFlag(args: List[String]): (Boolean, List[String]) =
 	  args match {
+	    // TODO - Once error message is better, drop this to only support --locate. 
 	    case ("-locate" | "--locate") :: tail => (true, tail)
 	    case _ =>  (false, args)
 	  }
@@ -63,24 +64,27 @@ object Launch
 	 * a valid file configured, we load the properties and and apply them to this jvm.
 	 */
 	def updateProperties(config: LaunchConfiguration): Unit = {
-	  // TODO - give a nice error message on IO failure.
 	  config.serverConfig match {
 	    case Some(config) =>
 	      config.jvmPropsFile match {
 	        case Some(file) if file.exists =>
-	          // Now we load the file.
-	          val props = new java.util.Properties
-	          val reader = new java.io.FileReader(file)
-	          try props.load(reader)
-	          finally reader.close()
-	          // Using java APIs in limited launcher environment => ugly code.
-	          val nameItr = props.stringPropertyNames.iterator
-	          while(nameItr.hasNext) {
-	            val propName = nameItr.next
-	            sys.props(propName) = props.getProperty(propName)
+	          try {
+	            // Now we load the file.
+	            val props = new java.util.Properties
+	            val reader = new java.io.FileReader(file)
+	            try props.load(reader)
+	            finally reader.close()
+	            // Using java APIs in limited launcher environment => ugly code.
+	            val nameItr = props.stringPropertyNames.iterator
+	            while(nameItr.hasNext) {
+	              val propName = nameItr.next
+	              sys.props(propName) = props.getProperty(propName)
+	            }
+	          } catch {
+	            case e: Exception => throw new RuntimeException(s"Unable to load server properties file: ${file}", e)
 	          }
 	        case _ =>
-	      }
+	    }
 	    case None =>
 	  }
 	}

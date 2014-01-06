@@ -11,6 +11,7 @@ object Boot
 	def main(args: Array[String])
 	{
 		args match {
+		    // TODO - once error message is better, drop this to only support --version.
 			case Array("--version" | "-version") =>
 				println("sbt launcher version " + Package.getPackage("xsbt.boot").getImplementationVersion)
 			case _ =>
