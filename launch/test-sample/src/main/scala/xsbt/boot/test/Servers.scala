@@ -4,47 +4,42 @@ package xsbt.boot.test
 import java.net.Socket
 import java.net.SocketTimeoutException
 
-// TODO - What does the server class look like?
 class EchoServer extends xsbti.ServerMain
 {
-	private var awaitThread: Thread = null
-	def awaitTermination(): xsbti.MainResult = {
-	  awaitThread.join()
-	  new Exit(0)
-	}
-  // TODO - Implement
-	def start(configuration: xsbti.AppConfiguration): java.net.URI =
+	def start(configuration: xsbti.AppConfiguration): xsbti.Server =
 	{
-	  // TODO - Start a server.
-	  val serverSocket = new java.net.ServerSocket(0)
-	  val port = serverSocket.getLocalPort
-	  val addr = serverSocket.getInetAddress.getHostAddress
-	  // Check for stop every second.
-	  serverSocket.setSoTimeout(1000)
-	  object serverThread extends Thread {
-	    private val running = new java.util.concurrent.atomic.AtomicBoolean(true)
-	    override def run(): Unit = {
-	      while(running.get) try {
-	        val clientSocket = serverSocket.accept()
-	        // Handle client connections
-	        object clientSocketThread extends Thread {
-	          override def run(): Unit = {
-	            echoTo(clientSocket)
+	  object server extends xsbti.Server {
+	    // TODO - Start a server.
+	    val serverSocket = new java.net.ServerSocket(0)
+	    val port = serverSocket.getLocalPort
+	    val addr = serverSocket.getInetAddress.getHostAddress
+	    override val uri =new java.net.URI(s"http://${addr}:${port}")
+	    // Check for stop every second.
+	    serverSocket.setSoTimeout(1000)
+	    object serverThread extends Thread {
+	      private val running = new java.util.concurrent.atomic.AtomicBoolean(true)
+	      override def run(): Unit = {
+	        while(running.get) try {
+	          val clientSocket = serverSocket.accept()
+  	          // Handle client connections
+	          object clientSocketThread extends Thread {
+	            override def run(): Unit = {
+	              echoTo(clientSocket)
+	            }
 	          }
+	          clientSocketThread.start()
+	        } catch {
+	          case e: SocketTimeoutException => // Ignore
 	        }
-	        clientSocketThread.start()
-	      } catch {
-	        case e: SocketTimeoutException => // Ignore
 	      }
-	    }
-	    // Simple mechanism to dump input to output.
-		private def echoTo(socket: Socket): Unit = {
-		  val input = new java.io.BufferedReader(new java.io.InputStreamReader(socket.getInputStream))
-		  val output = new java.io.BufferedWriter(new java.io.OutputStreamWriter(socket.getOutputStream))
-		  import scala.util.control.Breaks._
-		  try {
-		    // Lame way to break out.
-		    breakable {
+	      // Simple mechanism to dump input to output.
+		  private def echoTo(socket: Socket): Unit = {
+		    val input = new java.io.BufferedReader(new java.io.InputStreamReader(socket.getInputStream))
+		    val output = new java.io.BufferedWriter(new java.io.OutputStreamWriter(socket.getOutputStream))
+		    import scala.util.control.Breaks._
+		    try {
+		      // Lame way to break out.
+		      breakable {
 			    def read(): Unit = input.readLine match {
 			      case null => ()
 			      case "kill" => 
@@ -56,18 +51,23 @@ class EchoServer extends xsbti.ServerMain
 			        output.flush()
 			        read()
 			    }
-		      read()
+		        read()
+		      }
+		    } finally {
+			  output.close()
+		      input.close()
+		      socket.close()
 		    }
-		  } finally {
-			output.close()
-		    input.close()
-		    socket.close()
 		  }
-		}
+	    } 
+	    // Start the thread immediately
+	    serverThread.start()
+	   	override def awaitTermination(): xsbti.MainResult = {
+	     serverThread.join()
+	     new Exit(0)
+	    }
 	  }
-	  serverThread.start()
-	  awaitThread = serverThread
-	  new java.net.URI(s"http://${addr}:${port}")
+	  server
 	}
   
 	
