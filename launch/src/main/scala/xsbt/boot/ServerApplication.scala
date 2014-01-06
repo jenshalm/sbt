@@ -63,6 +63,7 @@ object ServerLocator {
       val props = new java.util.Properties
       val in = new java.io.FileInputStream(f)
       try {
+        // TODO - Will this work with UTF-8 written files?
         props.load(in)
       } finally in.close()
       props.getProperty(SERVER_URI_PROPERTY) match {
@@ -78,7 +79,9 @@ object ServerLocator {
     props.setProperty(SERVER_URI_PROPERTY, uri.toASCIIString)
     val output = new java.io.FileOutputStream(f)
     // TODO - Better date format.
-    try props.store(output, s"Server Startup at ${new java.util.Date()}")
+    val df = new java.text.SimpleDateFormat("yyyy-MM-dd'T'HH:mmZ")
+    df.setTimeZone(java.util.TimeZone.getTimeZone("UTC"))
+    try props.store(output, s"Server Startup at ${df.format(new java.util.Date)}")
     finally output.close()
   }
   
@@ -136,11 +139,10 @@ object ServerLauncher {
     try read()
     finally in.close()
   }
-  /** Reads all the lines in a file. If it doesn't exist, returns an empty list. */
+  /** Reads all the lines in a file. If it doesn't exist, returns an empty list.  Forces UTF-8 strings. */
   def readLines(f: File): List[String] = 
     if(!f.exists) Nil else {
-      // TODO - charsets...
-      val reader = new java.io.BufferedReader(new java.io.FileReader(f))
+      val reader = new java.io.BufferedReader(new java.io.InputStreamReader(new java.io.FileInputStream(f), "UTF-8"))
       def read(current: List[String]): List[String] = 
         reader.readLine match {
           case null => current.reverse

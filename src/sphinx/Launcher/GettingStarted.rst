@@ -93,46 +93,6 @@ configuration file inside the launcher jar and distributing that as a
 single download. The rest of this documentation describes the details of
 configuring, writing, distributing, and running the application.
 
-Execution
----------
-
-On startup, the launcher searches for its configuration and then 
-parses it.  Once the final configuration is resolved, the launcher 
-proceeds to obtain the necessary jars to launch the application. The
-`boot.directory` property is used as a base directory to retrieve jars
-to. Locking is done on the directory, so it can be shared system-wide.
-The launcher retrieves the requested version of Scala to
-
-.. code-block:: console
-
-    ${boot.directory}/${scala.version}/lib/
-
-If this directory already exists, the launcher takes a shortcut for
-startup performance and assumes that the jars have already been
-downloaded. If the directory does not exist, the launcher uses Apache
-Ivy to resolve and retrieve the jars. A similar process occurs for the
-application itself. It and its dependencies are retrieved to
-
-.. code-block:: console
-
-    ${boot.directory}/${scala.version}/${app.org}/${app.name}/.
-
-Once all required code is downloaded, the class loaders are set up. The
-launcher creates a class loader for the requested version of Scala. It
-then creates a child class loader containing the jars for the requested
-'app.components' and with the paths specified in `app.resources`. An
-application that does not use components will have all of its jars in
-this class loader.
-
-The main class for the application is then instantiated. It must be a
-public class with a public no-argument constructor and must conform to
-xsbti.AppMain. The `run` method is invoked and execution passes to the
-application. The argument to the 'run' method provides configuration
-information and a callback to obtain a class loader for any version of
-Scala that can be obtained from a repository in [repositories]. The
-return value of the run method determines what is done after the
-application executes. It can specify that the launcher should restart
-the application or that it should exit with the provided exit code.
 
 Creating a Launched Application
 -------------------------------
@@ -208,7 +168,7 @@ it might look like:
       directory: ${user.home}/.myapp/boot
 
 Then, `publishLocal` or `+publishLocal` the application to make it
-available.
+available.  For more information, please see :doc:`Launcher Configuration </Detailed-Topics/Launcher/Configuration>`
 
 Running an Application
 ----------------------
@@ -226,3 +186,47 @@ The second two require providing a configuration file for download.
    -  The user needs to run `java -Dsbt.boot.properties=your.boot.properties -jar launcher.jar`.
    -  The user already has a script to run the launcher (call it
       'launch'). The user needs to run `launch @your.boot.properties your-arg-1 your-arg-2`
+
+
+Execution
+---------
+
+Let's review what's happening when the launcher starts your application.
+
+On startup, the launcher searches for its configuration and then 
+parses it.  Once the final configuration is resolved, the launcher 
+proceeds to obtain the necessary jars to launch the application. The
+`boot.directory` property is used as a base directory to retrieve jars
+to. Locking is done on the directory, so it can be shared system-wide.
+The launcher retrieves the requested version of Scala to
+
+.. code-block:: console
+
+    ${boot.directory}/${scala.version}/lib/
+
+If this directory already exists, the launcher takes a shortcut for
+startup performance and assumes that the jars have already been
+downloaded. If the directory does not exist, the launcher uses Apache
+Ivy to resolve and retrieve the jars. A similar process occurs for the
+application itself. It and its dependencies are retrieved to
+
+.. code-block:: console
+
+    ${boot.directory}/${scala.version}/${app.org}/${app.name}/.
+
+Once all required code is downloaded, the class loaders are set up. The
+launcher creates a class loader for the requested version of Scala. It
+then creates a child class loader containing the jars for the requested
+'app.components' and with the paths specified in `app.resources`. An
+application that does not use components will have all of its jars in
+this class loader.
+
+The main class for the application is then instantiated. It must be a
+public class with a public no-argument constructor and must conform to
+xsbti.AppMain. The `run` method is invoked and execution passes to the
+application. The argument to the 'run' method provides configuration
+information and a callback to obtain a class loader for any version of
+Scala that can be obtained from a repository in [repositories]. The
+return value of the run method determines what is done after the
+application executes. It can specify that the launcher should restart
+the application or that it should exit with the provided exit code.
