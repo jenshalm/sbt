@@ -64,10 +64,8 @@ object ServerLocator {
     try {
       val props = new java.util.Properties
       val in = new java.io.FileInputStream(f)
-      try {
-        // TODO - Will this work with UTF-8 written files?
-        props.load(in)
-      } finally in.close()
+      try props.load(in)
+      finally in.close()
       props.getProperty(SERVER_URI_PROPERTY) match {
         case null => None
         case uri  => Some(new java.net.URI(uri))
