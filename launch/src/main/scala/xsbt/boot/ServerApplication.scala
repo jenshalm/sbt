@@ -6,7 +6,6 @@ import scala.util.control.NonFatal
 import java.net.URI
 import java.io.IOException
 import Pre._
-import com.sun.org.apache.xalan.internal.xslt.Process
 
 /** A wrapper around 'raw' static methods to meet the sbt application interface. */
 class ServerApplication private (provider: xsbti.AppProvider) extends xsbti.AppMain {
