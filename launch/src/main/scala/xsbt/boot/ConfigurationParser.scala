@@ -181,10 +181,6 @@ class ConfigurationParser
 		val app = new Application(org, name, rev, main, components, LaunchCrossVersion(crossVersioned), classpathExtra)
 		(app, classifiers)
 	}
-	// TODO - We should be parsing the configuration file
-	// TODO - It's not really the lock but the "info properties" file
-	// TODO - We should have a way to disable locking for filesystems that don't
-	//        support it.
 	def getServer(m: LabelMap): (Option[ServerConfiguration]) =
 	{
 	  val (lock, m1) = optfile(m, "lock")

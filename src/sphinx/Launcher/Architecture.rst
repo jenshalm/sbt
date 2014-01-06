@@ -7,11 +7,12 @@ executed within a jvm.  It abstracts the mechanism of grabbing and caching jars,
 allowing users to focus on what application they want and control its versions.
 
 The launcher's primary goal is to take configuration for applications, mostly
-just ivy coordinates and a main class,and start the application.   The
+just ivy coordinates and a main class, and start the application.   The
 launcher resolves the ivy module, caches the required runtime jars and 
 starts the application.  
 
-The sbt launcher provides the application with the means to load a different appllication when it completes, exit normally, or load additional applications
+The sbt launcher provides the application with the means to load a different 
+application when it completes, exit normally, or load additional applications
 from inside another.
 
 The sbt launcher provides these core functions:
@@ -78,11 +79,13 @@ In addition to providing a secondary cache, the launcher also provides a mechani
 of safely doing file-based locks.  This is used in two places directly by the
 launcher:
 
-1. Ensuring single-process access to the ivy cache.
+1. Locking the boot directory.
 2. Ensuring located servers have at most one active process.
 
 This feature requires a filesystem which supports locking.  It is exposed via the
 `xsbti.GlobalLock` interface.
+
+*Note:  This is both a thread and file lock.  Not only are we limiting access to a single process, but also a single thread within that process.*
 
 Service Discovery and Isolation
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

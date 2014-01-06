@@ -163,7 +163,7 @@ resolving applications.  It consists of the following properties:
 
 6. The Server Section
 ---------------------
-When using the `-locate` feature of the launcher, this section configures
+When using the `--locate` feature of the launcher, this section configures
 how a server is started.  It consists of the following properties:
 
 * `lock` - The file that controls access to the running server.  This file

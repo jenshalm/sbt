@@ -93,28 +93,12 @@ configuration file inside the launcher jar and distributing that as a
 single download. The rest of this documentation describes the details of
 configuring, writing, distributing, and running the application.
 
-Configuration
--------------
-
-
-
 Execution
 ---------
 
-On startup, the launcher searches for its configuration in the order
-described in the Configuration section and then parses it. If either the
-Scala version or the application version are specified as 'read', the
-launcher determines them in the following manner. The file given by the
-'boot.properties' property is read as a Java properties file to obtain
-the version. The expected property names are `${app.name}.version` for
-the application version (where `${app.name}` is replaced with the
-value of the `app.name` property from the boot configuration file) and
-`scala.version` for the Scala version. If the properties file does not
-exist, the default value provided is used. If no default was provided,
-an error is generated.
-
-Once the final configuration is resolved, the launcher proceeds to
-obtain the necessary jars to launch the application. The
+On startup, the launcher searches for its configuration and then 
+parses it.  Once the final configuration is resolved, the launcher 
+proceeds to obtain the necessary jars to launch the application. The
 `boot.directory` property is used as a base directory to retrieve jars
 to. Locking is done on the directory, so it can be shared system-wide.
 The launcher retrieves the requested version of Scala to
